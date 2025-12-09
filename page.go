@@ -11,10 +11,9 @@ import (
 var (
 	//go:embed page.tmpl
 	defaultTemplateContent string
-	defaultTemplate        = template.Must(template.New("page").Parse(defaultTemplateContent))
 )
 
-// Page represents a status page that can be served via HTTP
+// Page represents a status page that can be served via HTTP.
 type Page struct {
 	title       string
 	tmpl        *template.Template
@@ -23,31 +22,31 @@ type Page struct {
 	showVersion bool
 }
 
-// PageOption is a function that configures a Page
+// PageOption is a function that configures a Page.
 type PageOption func(*Page)
 
-// WithTitle sets the title of the status page
+// WithTitle sets the title of the status page.
 func WithTitle(title string) PageOption {
 	return func(p *Page) {
 		p.title = title
 	}
 }
 
-// WithTemplate sets a custom HTML template for the status page
+// WithTemplate sets a custom HTML template for the status page.
 func WithTemplate(tmpl *template.Template) PageOption {
 	return func(p *Page) {
 		p.tmpl = tmpl
 	}
 }
 
-// WithHealthChecker sets the health checker for the status page
+// WithHealthChecker sets the health checker for the status page.
 func WithHealthChecker(hc *HealthChecker) PageOption {
 	return func(p *Page) {
 		p.hc = hc
 	}
 }
 
-// WithLink adds a navigation link to the status page
+// WithLink adds a navigation link to the status page.
 func WithLink(name, url string) PageOption {
 	return func(p *Page) {
 		p.links = append(p.links, Link{
@@ -57,18 +56,18 @@ func WithLink(name, url string) PageOption {
 	}
 }
 
-// WithVersion configures whether to show version information on the status page
+// WithVersion configures whether to show version information on the status page.
 func WithVersion(show bool) PageOption {
 	return func(p *Page) {
 		p.showVersion = show
 	}
 }
 
-// NewPage creates a new status page with the given options
+// NewPage creates a new status page with the given options.
 func NewPage(opts ...PageOption) *Page {
 	p := &Page{
 		title:       "System Status",
-		tmpl:        defaultTemplate,
+		tmpl:        parseDefaultTemplate(),
 		showVersion: true,
 	}
 
@@ -79,13 +78,13 @@ func NewPage(opts ...PageOption) *Page {
 	return p
 }
 
-// Link represents a navigation link in the status page
+// Link represents a navigation link in the status page.
 type Link struct {
 	Name string
 	URL  string
 }
 
-// PageData contains the data that will be rendered in the status page template
+// PageData contains the data that will be rendered in the status page template.
 type PageData struct {
 	Title         string
 	Version       string
@@ -93,7 +92,7 @@ type PageData struct {
 	Links         []Link
 }
 
-// Handler returns an HTTP handler that serves the status page
+// Handler returns an HTTP handler that serves the status page.
 func (p *Page) Handler() http.HandlerFunc {
 	version := retrieveVersion()
 
@@ -104,6 +103,7 @@ func (p *Page) Handler() http.HandlerFunc {
 			healthResults, err = p.hc.Check(r.Context())
 			if err != nil {
 				http.Error(w, fmt.Sprintf("Error checking health: %v", err), http.StatusInternalServerError)
+
 				return
 			}
 		}
@@ -134,4 +134,8 @@ func retrieveVersion() string {
 	}
 
 	return info.Main.Version
+}
+
+func parseDefaultTemplate() *template.Template {
+	return template.Must(template.New("page").Parse(defaultTemplateContent))
 }

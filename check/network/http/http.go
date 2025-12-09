@@ -33,7 +33,7 @@ func Check(method, url string, expectedStatus int, config check.Config) check.Ch
 	})
 }
 
-// CheckGraphQL creates a health check for GraphQL endpoints
+// CheckGraphQL creates a health check for GraphQL endpoints.
 func CheckGraphQL(method, url string, expectedStatus int, config check.Config) check.Check {
 	return check.CheckFunc(func(ctx context.Context) error {
 		query := `{ __schema { types { name } } }`

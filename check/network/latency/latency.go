@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strconv"
 	"time"
 
 	"github.com/alarmistdev/status/check"
 )
 
-// Check creates a health check for network latency
+// Check creates a health check for network latency.
 func Check(host string, port int, maxLatency time.Duration) check.Check {
 	return check.CheckFunc(func(ctx context.Context) error {
 		select {
@@ -18,7 +19,7 @@ func Check(host string, port int, maxLatency time.Duration) check.Check {
 		default:
 		}
 
-		addr := net.JoinHostPort(host, fmt.Sprintf("%d", port))
+		addr := net.JoinHostPort(host, strconv.Itoa(port))
 		start := time.Now()
 
 		dialer := &net.Dialer{Timeout: maxLatency}

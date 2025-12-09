@@ -8,7 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// Check creates a health check for Redis
+// Check creates a health check for Redis.
 func Check(addr string, config check.Config) check.Check {
 	return check.CheckFunc(func(ctx context.Context) error {
 		client := redis.NewClient(&redis.Options{
@@ -33,7 +33,7 @@ func Check(addr string, config check.Config) check.Check {
 	})
 }
 
-// CheckWithAuth creates a health check for Redis with authentication
+// CheckWithAuth creates a health check for Redis with authentication.
 func CheckWithAuth(addr, username, password string, config check.Config) check.Check {
 	return check.CheckFunc(func(ctx context.Context) error {
 		client := redis.NewClient(&redis.Options{

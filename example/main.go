@@ -17,18 +17,48 @@ import (
 
 func main() {
 	// Create a health checker
+	const (
+		googleTLSPort          = 443
+		googleLatencyThreshold = 500 * time.Millisecond
+	)
+
 	healthChecker := status.NewHealthChecker().
-		WithTarget("HTTP Google", status.TargetImportanceHigh, httpcheck.Check(http.MethodGet, "https://google.com", 200, check.Config{})).
-		WithTarget("ICMP Google", status.TargetImportanceHigh, icmpcheck.Check("google.com")).
-		WithTarget("Latency Google", status.TargetImportanceHigh, latencycheck.Check("google.com", 443, 500*time.Millisecond)).
-		WithTarget("Database", status.TargetImportanceHigh, check.CheckFunc(func(_ context.Context) error {
-			// Implement your database health check here
-			return generateRandomError()
-		})).
-		WithTarget("Network", status.TargetImportanceLow, check.CheckFunc(func(_ context.Context) error {
-			// Implement your network health check here
-			return generateRandomError()
-		}))
+		WithTarget(
+			"HTTP Google",
+			status.TargetImportanceHigh,
+			httpcheck.Check(
+				http.MethodGet,
+				"https://google.com",
+				http.StatusOK,
+				check.Config{},
+			),
+		).
+		WithTarget(
+			"ICMP Google",
+			status.TargetImportanceHigh,
+			icmpcheck.Check("google.com"),
+		).
+		WithTarget(
+			"Latency Google",
+			status.TargetImportanceHigh,
+			latencycheck.Check("google.com", googleTLSPort, googleLatencyThreshold),
+		).
+		WithTarget(
+			"Database",
+			status.TargetImportanceHigh,
+			check.CheckFunc(func(_ context.Context) error {
+				// Implement your database health check here
+				return generateRandomError()
+			}),
+		).
+		WithTarget(
+			"Network",
+			status.TargetImportanceLow,
+			check.CheckFunc(func(_ context.Context) error {
+				// Implement your network health check here
+				return generateRandomError()
+			}),
+		)
 
 	// Create a status page
 	statusPage := status.NewPage(
@@ -48,7 +78,9 @@ func main() {
 }
 
 func generateRandomError() error {
-	if rand.Intn(2) == 0 {
+	const randomOutcomeCount = 2
+
+	if rand.Intn(randomOutcomeCount) == 0 {
 		return nil
 	}
 

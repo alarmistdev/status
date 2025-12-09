@@ -6,10 +6,10 @@ import (
 	"fmt"
 
 	"github.com/alarmistdev/status/check"
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // register postgres driver
 )
 
-// Check creates a health check for PostgreSQL
+// Check creates a health check for PostgreSQL.
 func Check(dsn string, config check.Config) check.Check {
 	return check.CheckFunc(func(ctx context.Context) error {
 		db, err := sql.Open("postgres", dsn)

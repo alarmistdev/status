@@ -8,64 +8,74 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// Config holds common configuration for health checks
+const (
+	defaultTimeout    = 5 * time.Second
+	defaultRetries    = 3
+	defaultRetryDelay = time.Second
+)
+
+// Config holds common configuration for health checks.
 type Config struct {
 	Timeout    time.Duration
 	Retries    int
 	RetryDelay time.Duration
 }
 
-// DefaultConfig returns a Config with sensible defaults
+// DefaultConfig returns a Config with sensible defaults.
 func DefaultConfig() Config {
 	return Config{
-		Timeout:    5 * time.Second,
-		Retries:    3,
-		RetryDelay: time.Second,
+		Timeout:    defaultTimeout,
+		Retries:    defaultRetries,
+		RetryDelay: defaultRetryDelay,
 	}
 }
 
-// WithTimeout sets the timeout for the health check
+// WithTimeout sets the timeout for the health check.
 func (c Config) WithTimeout(timeout time.Duration) Config {
 	c.Timeout = timeout
+
 	return c
 }
 
-// WithRetries sets the number of retries for the health check
+// WithRetries sets the number of retries for the health check.
 func (c Config) WithRetries(retries int) Config {
 	c.Retries = retries
+
 	return c
 }
 
-// WithRetryDelay sets the delay between retries
+// WithRetryDelay sets the delay between retries.
 func (c Config) WithRetryDelay(delay time.Duration) Config {
 	c.RetryDelay = delay
+
 	return c
 }
 
-// Check is the interface that all health checks must implement
+// Check is the interface that all health checks must implement.
 type Check interface {
 	// Check performs the health check and returns an error if unhealthy
 	Check(ctx context.Context) error
 }
 
-// CheckFunc is a function type that implements the Check interface
+// CheckFunc is a function type that implements the Check interface.
 type CheckFunc func(ctx context.Context) error
 
-// Check implements the Check interface for CheckFunc
+// Check implements the Check interface for CheckFunc.
 func (f CheckFunc) Check(ctx context.Context) error {
 	return f(ctx)
 }
 
-// WithTimeout wraps a Check with a timeout
+// WithTimeout wraps a Check with a timeout.
 func WithTimeout(check Check, timeout time.Duration) Check {
 	return CheckFunc(func(ctx context.Context) error {
 		ctx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
+
 		return check.Check(ctx)
 	})
 }
 
-// WithRetries wraps a Check with retry logic
+// WithRetries wraps a Check with retry logic.
 func WithRetries(check Check, attempts int, delay time.Duration) Check {
 	return CheckFunc(func(ctx context.Context) error {
 		var lastErr error
@@ -82,11 +92,12 @@ func WithRetries(check Check, attempts int, delay time.Duration) Check {
 			case <-time.After(delay):
 			}
 		}
+
 		return lastErr
 	})
 }
 
-// All creates a health check that requires all checks to pass
+// All creates a health check that requires all checks to pass.
 func All(checks ...Check) Check {
 	return CheckFunc(func(ctx context.Context) error {
 		g, ctx := errgroup.WithContext(ctx)
@@ -97,11 +108,15 @@ func All(checks ...Check) Check {
 			})
 		}
 
-		return g.Wait()
+		if err := g.Wait(); err != nil {
+			return fmt.Errorf("waiting errgroup: %w", err)
+		}
+
+		return nil
 	})
 }
 
-// Any creates a health check that requires at least one check to pass
+// Any creates a health check that requires at least one check to pass.
 func Any(checks ...Check) Check {
 	return CheckFunc(func(ctx context.Context) error {
 		g, ctx := errgroup.WithContext(ctx)
@@ -115,12 +130,13 @@ func Any(checks ...Check) Check {
 				case <-ctx.Done():
 					return ctx.Err()
 				}
+
 				return nil
 			})
 		}
 
 		if err := g.Wait(); err != nil {
-			return err
+			return fmt.Errorf("waiting errgroup: %w", err)
 		}
 		close(results)
 
@@ -129,6 +145,7 @@ func Any(checks ...Check) Check {
 		for err := range results {
 			if err == nil {
 				success = true
+
 				break
 			}
 			lastErr = err
@@ -142,7 +159,7 @@ func Any(checks ...Check) Check {
 	})
 }
 
-// WithThreshold creates a health check that requires a minimum number of checks to pass
+// WithThreshold creates a health check that requires a minimum number of checks to pass.
 func WithThreshold(threshold int, checks ...Check) Check {
 	return CheckFunc(func(ctx context.Context) error {
 		g, ctx := errgroup.WithContext(ctx)
@@ -156,12 +173,13 @@ func WithThreshold(threshold int, checks ...Check) Check {
 				case <-ctx.Done():
 					return ctx.Err()
 				}
+
 				return nil
 			})
 		}
 
 		if err := g.Wait(); err != nil {
-			return err
+			return fmt.Errorf("waiting errgroup: %w", err)
 		}
 		close(results)
 

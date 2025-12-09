@@ -9,7 +9,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-// Check creates a health check for RabbitMQ
+// Check creates a health check for RabbitMQ.
 func Check(url string, config check.Config) check.Check {
 	return check.CheckFunc(func(ctx context.Context) error {
 		// Create a connection with timeout
@@ -20,7 +20,10 @@ func Check(url string, config check.Config) check.Check {
 					return nil, ctx.Err()
 				default:
 				}
-				return net.DialTimeout(network, addr, config.Timeout)
+
+				dialer := &net.Dialer{Timeout: config.Timeout}
+
+				return dialer.DialContext(ctx, network, addr)
 			},
 		})
 		if err != nil {

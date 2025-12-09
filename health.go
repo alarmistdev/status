@@ -51,6 +51,7 @@ func (c *HealthChecker) WithTarget(name string, importance TargetImportance, che
 		Importance: importance,
 		check:      check,
 	})
+
 	return c
 }
 
@@ -58,6 +59,7 @@ func (c *HealthChecker) Handler() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, noDeps := r.URL.Query()["no_deps"]; noDeps {
 			w.WriteHeader(http.StatusOK)
+
 			return
 		}
 
@@ -66,6 +68,7 @@ func (c *HealthChecker) Handler() http.HandlerFunc {
 		results, err := c.Check(ctx)
 		if err != nil {
 			respondJSON(w, http.StatusInternalServerError, err)
+
 			return
 		}
 
@@ -75,6 +78,7 @@ func (c *HealthChecker) Handler() http.HandlerFunc {
 			if result.Target.Importance == TargetImportanceHigh &&
 				(result.Status != HealthTargetStatusOk || result.err != nil) {
 				status = http.StatusInternalServerError
+
 				break
 			}
 		}
@@ -108,14 +112,16 @@ func (c *HealthChecker) Check(ctx context.Context) ([]HealthCheckResult, error) 
 
 	g, ctx := errgroup.WithContext(ctx)
 
-	for i, target := range c.targets {
+	for i := range c.targets {
+		index := i
+		target := c.targets[i]
 		g.Go(func() error {
 			start := time.Now()
 			err := target.check.Check(ctx)
 			duration := time.Since(start)
 
 			if err != nil {
-				results[i] = HealthCheckResult{
+				results[index] = HealthCheckResult{
 					Target:       target,
 					Status:       HealthTargetStatusFail,
 					err:          err,
@@ -123,7 +129,7 @@ func (c *HealthChecker) Check(ctx context.Context) ([]HealthCheckResult, error) 
 					Duration:     duration,
 				}
 			} else {
-				results[i] = HealthCheckResult{
+				results[index] = HealthCheckResult{
 					Target:   target,
 					Status:   HealthTargetStatusOk,
 					Duration: duration,

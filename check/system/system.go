@@ -10,13 +10,18 @@ import (
 	"github.com/alarmistdev/status/check"
 )
 
-// CheckMemory creates a health check for memory usage
+const (
+	percentMultiplier = 100
+	bytesPerGB        = 1024 * 1024 * 1024
+)
+
+// CheckMemory creates a health check for memory usage.
 func CheckMemory(maxUsagePercent float64) check.Check {
 	return check.CheckFunc(func(_ context.Context) error {
 		var m runtime.MemStats
 		runtime.ReadMemStats(&m)
 
-		usagePercent := float64(m.Alloc) / float64(m.Sys) * 100
+		usagePercent := float64(m.Alloc) / float64(m.Sys) * percentMultiplier
 		if usagePercent > maxUsagePercent {
 			return fmt.Errorf("high memory usage: %.2f%% (maximum: %.2f%%)",
 				usagePercent, maxUsagePercent)
@@ -26,7 +31,7 @@ func CheckMemory(maxUsagePercent float64) check.Check {
 	})
 }
 
-// CheckDiskSpace creates a health check for disk space
+// CheckDiskSpace creates a health check for disk space.
 func CheckDiskSpace(path string, minFreeSpaceGB float64) check.Check {
 	return check.CheckFunc(func(_ context.Context) error {
 		var stat syscall.Statfs_t
@@ -34,7 +39,7 @@ func CheckDiskSpace(path string, minFreeSpaceGB float64) check.Check {
 			return fmt.Errorf("failed to get disk stats: %w", err)
 		}
 
-		freeSpaceGB := float64(stat.Bavail*uint64(stat.Bsize)) / (1024 * 1024 * 1024)
+		freeSpaceGB := float64(stat.Bavail*uint64(stat.Bsize)) / bytesPerGB
 		if freeSpaceGB < minFreeSpaceGB {
 			return fmt.Errorf("insufficient disk space: %.2f GB free (minimum: %.2f GB)",
 				freeSpaceGB, minFreeSpaceGB)
@@ -44,7 +49,7 @@ func CheckDiskSpace(path string, minFreeSpaceGB float64) check.Check {
 	})
 }
 
-// FileCheck creates a health check for file existence and permissions
+// FileCheck creates a health check for file existence and permissions.
 func CheckFile(path string, requiredPerm os.FileMode) check.Check {
 	return check.CheckFunc(func(_ context.Context) error {
 		info, err := os.Stat(path)

@@ -8,7 +8,7 @@ import (
 	"github.com/alarmistdev/status/check"
 )
 
-// Check creates a health check for Kafka
+// Check creates a health check for Kafka.
 func Check(brokers []string, config check.Config) check.Check {
 	return check.CheckFunc(func(ctx context.Context) error {
 		kafkaConfig := sarama.NewConfig()

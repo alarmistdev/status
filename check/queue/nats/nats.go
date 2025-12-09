@@ -8,7 +8,7 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
-// Check creates a health check for NATS
+// Check creates a health check for NATS.
 func Check(url string, config check.Config) check.Check {
 	return check.CheckFunc(func(ctx context.Context) error {
 		nc, err := nats.Connect(url,
