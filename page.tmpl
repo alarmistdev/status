@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>{{.Title}}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css">
     <style>
         :root {
             --bg-color: #f5f5f5;
@@ -92,6 +93,21 @@
             padding: 15px;
             border-radius: 4px;
             background-color: white;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            justify-content: space-between;
+        }
+
+        .status-item .icon {
+            font-size: 2em;
+            color: var(--accent-color);
+            order: 2;
+        }
+
+        .status-item .content {
+            flex: 1;
+            order: 1;
         }
 
         .status-item h3 {
@@ -155,14 +171,18 @@
             <div class="status-grid">
                 {{range .HealthResults}}
                 <div class="status-item {{if eq .Status "ok"}}ok{{else if eq .Target.Importance "low"}}warning{{else}}fail{{end}}">
-                    <h3>{{.Target.Name}}</h3>
-                    <p>Status: <strong>{{.Status}}</strong></p>
-                    {{if .ErrorMessage}}
-                    <p class="error">{{if eq .Target.Importance "low"}}Warning: {{else}}Error: {{end}}{{.ErrorMessage}}</p>
-                    {{end}}
-                    {{if .Duration}}
-                    <p class="duration">Response time: {{.Duration}}</p>
-                    {{end}}
+                    <!-- TODO: Add icon for each target -->
+                    <!--<i class="devicon-postgresql-plain icon"></i>-->
+                    <div class="content">
+                        <h3>{{.Target.Name}}</h3>
+                        <p>Status: <strong>{{.Status}}</strong></p>
+                        {{if .ErrorMessage}}
+                        <p class="error">{{if eq .Target.Importance "low"}}Warning: {{else}}Error: {{end}}{{.ErrorMessage}}</p>
+                        {{end}}
+                        {{if .Duration}}
+                        <p class="duration">Response time: {{.Duration}}</p>
+                        {{end}}
+                    </div>
                 </div>
                 {{end}}
             </div>

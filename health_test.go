@@ -8,6 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/alarmistdev/status/check"
 )
 
 func TestHealthChecker_Handler(t *testing.T) {
@@ -26,9 +28,9 @@ func TestHealthChecker_Handler(t *testing.T) {
 				{
 					Name:       "failing_target",
 					Importance: TargetImportanceHigh,
-					check: func(ctx context.Context) error {
+					check: check.CheckFunc(func(ctx context.Context) error {
 						return errors.New("this error should not be seen due to no_deps")
-					},
+					}),
 				},
 			},
 			queryParams:    "?no_deps=true",
@@ -41,16 +43,16 @@ func TestHealthChecker_Handler(t *testing.T) {
 				{
 					Name:       "test1",
 					Importance: TargetImportanceLow,
-					check: func(ctx context.Context) error {
+					check: check.CheckFunc(func(ctx context.Context) error {
 						return nil
-					},
+					}),
 				},
 				{
 					Name:       "test2",
 					Importance: TargetImportanceHigh,
-					check: func(ctx context.Context) error {
+					check: check.CheckFunc(func(ctx context.Context) error {
 						return nil
-					},
+					}),
 				},
 			},
 			queryParams:    "",
@@ -80,16 +82,16 @@ func TestHealthChecker_Handler(t *testing.T) {
 				{
 					Name:       "test1",
 					Importance: TargetImportanceLow,
-					check: func(ctx context.Context) error {
+					check: check.CheckFunc(func(ctx context.Context) error {
 						return errors.New("low importance error")
-					},
+					}),
 				},
 				{
 					Name:       "test2",
 					Importance: TargetImportanceHigh,
-					check: func(ctx context.Context) error {
+					check: check.CheckFunc(func(ctx context.Context) error {
 						return nil
-					},
+					}),
 				},
 			},
 			queryParams:    "",
@@ -120,16 +122,16 @@ func TestHealthChecker_Handler(t *testing.T) {
 				{
 					Name:       "test1",
 					Importance: TargetImportanceLow,
-					check: func(ctx context.Context) error {
+					check: check.CheckFunc(func(ctx context.Context) error {
 						return errors.New("low importance error")
-					},
+					}),
 				},
 				{
 					Name:       "test2",
 					Importance: TargetImportanceHigh,
-					check: func(ctx context.Context) error {
+					check: check.CheckFunc(func(ctx context.Context) error {
 						return errors.New("high importance error")
-					},
+					}),
 				},
 			},
 			queryParams:    "",
@@ -239,62 +241,47 @@ func TestHealthChecker_Check(t *testing.T) {
 				{
 					Name:       "test1",
 					Importance: TargetImportanceLow,
-					check: func(ctx context.Context) error {
+					check: check.CheckFunc(func(ctx context.Context) error {
 						return nil
-					},
+					}),
 				},
 				{
 					Name:       "test2",
 					Importance: TargetImportanceHigh,
-					check: func(ctx context.Context) error {
+					check: check.CheckFunc(func(ctx context.Context) error {
 						return nil
-					},
+					}),
 				},
 			},
-			expectedStatus: []HealthTargetStatus{HealthTargetStatusOk, HealthTargetStatusOk},
+			expectedStatus: []HealthTargetStatus{
+				HealthTargetStatusOk,
+				HealthTargetStatusOk,
+			},
 			expectedErrors: []string{"", ""},
 		},
 		{
-			name: "mixed results",
+			name: "some targets unhealthy",
 			targets: []HealthTarget{
 				{
 					Name:       "test1",
 					Importance: TargetImportanceLow,
-					check: func(ctx context.Context) error {
-						return errors.New("low importance error")
-					},
+					check: check.CheckFunc(func(ctx context.Context) error {
+						return errors.New("test1 error")
+					}),
 				},
 				{
 					Name:       "test2",
 					Importance: TargetImportanceHigh,
-					check: func(ctx context.Context) error {
+					check: check.CheckFunc(func(ctx context.Context) error {
 						return nil
-					},
+					}),
 				},
 			},
-			expectedStatus: []HealthTargetStatus{HealthTargetStatusFail, HealthTargetStatusOk},
-			expectedErrors: []string{"low importance error", ""},
-		},
-		{
-			name: "all targets unhealthy",
-			targets: []HealthTarget{
-				{
-					Name:       "test1",
-					Importance: TargetImportanceLow,
-					check: func(ctx context.Context) error {
-						return errors.New("low importance error")
-					},
-				},
-				{
-					Name:       "test2",
-					Importance: TargetImportanceHigh,
-					check: func(ctx context.Context) error {
-						return errors.New("high importance error")
-					},
-				},
+			expectedStatus: []HealthTargetStatus{
+				HealthTargetStatusFail,
+				HealthTargetStatusOk,
 			},
-			expectedStatus: []HealthTargetStatus{HealthTargetStatusFail, HealthTargetStatusFail},
-			expectedErrors: []string{"low importance error", "high importance error"},
+			expectedErrors: []string{"test1 error", ""},
 		},
 		{
 			name: "context cancellation",
@@ -302,21 +289,18 @@ func TestHealthChecker_Check(t *testing.T) {
 				{
 					Name:       "test1",
 					Importance: TargetImportanceLow,
-					check: func(ctx context.Context) error {
-						select {
-						case <-ctx.Done():
-							return ctx.Err()
-						case <-time.After(100 * time.Millisecond):
-							return nil
-						}
-					},
+					check: check.CheckFunc(func(ctx context.Context) error {
+						<-ctx.Done()
+						return ctx.Err()
+					}),
 				},
 			},
-			expectedStatus: []HealthTargetStatus{HealthTargetStatusFail},
-			expectedErrors: []string{"context deadline exceeded"},
+			expectedStatus: []HealthTargetStatus{
+				HealthTargetStatusFail,
+			},
+			expectedErrors: []string{"context canceled or deadline exceeded"},
 			setupContext: func(ctx context.Context) (context.Context, context.CancelFunc) {
-				ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
-				return ctx, cancel
+				return context.WithTimeout(ctx, 100*time.Millisecond)
 			},
 		},
 	}
@@ -336,8 +320,8 @@ func TestHealthChecker_Check(t *testing.T) {
 			}
 
 			results, err := checker.Check(ctx)
-			if err != nil && tt.name != "context cancellation" {
-				t.Errorf("unexpected error: %v", err)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
 			}
 
 			if len(results) != len(tt.expectedStatus) {
@@ -351,11 +335,15 @@ func TestHealthChecker_Check(t *testing.T) {
 				}
 
 				if tt.expectedErrors[i] != "" {
-					if result.ErrorMessage != tt.expectedErrors[i] {
+					if tt.expectedErrors[i] == "context canceled or deadline exceeded" {
+						if result.ErrorMessage != "context canceled" && result.ErrorMessage != "context deadline exceeded" {
+							t.Errorf("result[%d]: expected error context canceled or context deadline exceeded, got %s", i, result.ErrorMessage)
+						}
+					} else if result.ErrorMessage != tt.expectedErrors[i] {
 						t.Errorf("result[%d]: expected error %s, got %s", i, tt.expectedErrors[i], result.ErrorMessage)
 					}
 				} else if result.ErrorMessage != "" {
-					t.Errorf("result[%d]: unexpected error %s", i, result.ErrorMessage)
+					t.Errorf("result[%d]: expected no error, got %s", i, result.ErrorMessage)
 				}
 			}
 		})

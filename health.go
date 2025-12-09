@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/alarmistdev/status/check"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -19,7 +20,7 @@ import (
 type HealthTarget struct {
 	Name       string           `json:"name"`
 	Importance TargetImportance `json:"importance"`
-	check      HealthCheckFunc
+	check      check.Check
 }
 
 // TargetImportance defines the importance level of a health check target.
@@ -31,9 +32,6 @@ const (
 	// TargetImportanceHigh indicates that the target is critical for the application.
 	TargetImportanceHigh = TargetImportance("high")
 )
-
-// HealthCheckFunc is a function type that performs a health check and returns an error if unhealthy.
-type HealthCheckFunc func(ctx context.Context) error
 
 // HealthChecker manages a collection of health check targets and provides
 // functionality to check their health status.
@@ -47,7 +45,7 @@ func NewHealthChecker() *HealthChecker {
 }
 
 // WithTarget adds a new health check target to the checker.
-func (c *HealthChecker) WithTarget(name string, importance TargetImportance, check HealthCheckFunc) *HealthChecker {
+func (c *HealthChecker) WithTarget(name string, importance TargetImportance, check check.Check) *HealthChecker {
 	c.targets = append(c.targets, HealthTarget{
 		Name:       name,
 		Importance: importance,
@@ -113,7 +111,7 @@ func (c *HealthChecker) Check(ctx context.Context) ([]HealthCheckResult, error) 
 	for i, target := range c.targets {
 		g.Go(func() error {
 			start := time.Now()
-			err := target.check(ctx)
+			err := target.check.Check(ctx)
 			duration := time.Since(start)
 
 			if err != nil {
