@@ -289,7 +289,14 @@ func runCheckTestCase(t *testing.T, tt checkTestCase) {
 func newHealthChecker(targets []HealthTarget) *HealthChecker {
 	checker := NewHealthChecker()
 	for _, target := range targets {
-		checker.WithTarget(target.Name, target.Importance, target.check)
+		opts := []TargetOption{}
+		if target.Importance != TargetImportanceHigh {
+			opts = append(opts, WithImportance(target.Importance))
+		}
+		if target.Icon != "" {
+			opts = append(opts, WithIcon(target.Icon))
+		}
+		checker.WithTarget(target.Name, target.check, opts...)
 	}
 
 	return checker

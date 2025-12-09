@@ -11,12 +11,10 @@ import (
 	"github.com/alarmistdev/status"
 	"github.com/alarmistdev/status/check"
 	httpcheck "github.com/alarmistdev/status/check/network/http"
-	icmpcheck "github.com/alarmistdev/status/check/network/icmp"
 	latencycheck "github.com/alarmistdev/status/check/network/latency"
 )
 
 func main() {
-	// Create a health checker
 	const (
 		googleTLSPort          = 443
 		googleLatencyThreshold = 500 * time.Millisecond
@@ -25,55 +23,45 @@ func main() {
 	healthChecker := status.NewHealthChecker().
 		WithTarget(
 			"HTTP Google",
-			status.TargetImportanceHigh,
 			httpcheck.Check(
 				http.MethodGet,
 				"https://google.com",
 				http.StatusOK,
 				check.Config{},
 			),
+			status.WithIcon("devicon-google-plain"),
 		).
 		WithTarget(
-			"ICMP Google",
-			status.TargetImportanceHigh,
-			icmpcheck.Check("google.com"),
-		).
-		WithTarget(
-			"Latency Google",
-			status.TargetImportanceHigh,
+			"Latency AWS",
 			latencycheck.Check("google.com", googleTLSPort, googleLatencyThreshold),
+			status.WithIcon("devicon-amazonwebservices-plain-wordmark"),
 		).
 		WithTarget(
 			"Database",
-			status.TargetImportanceHigh,
 			check.CheckFunc(func(_ context.Context) error {
 				// Implement your database health check here
 				return generateRandomError()
 			}),
+			status.WithIcon("devicon-postgresql-plain"),
 		).
 		WithTarget(
 			"Network",
-			status.TargetImportanceLow,
 			check.CheckFunc(func(_ context.Context) error {
 				// Implement your network health check here
 				return generateRandomError()
 			}),
+			status.WithImportance(status.TargetImportanceLow),
 		)
 
-	// Create a status page
 	statusPage := status.NewPage(
-		// Add health checker to status page
 		status.WithHealthChecker(healthChecker),
-		// Add additional links
 		status.WithLink("OpenAPI Documentation", "/swagger"),
 		status.WithLink("Metrics", "/metrics"),
 	)
 
-	// Set up HTTP handlers
 	http.HandleFunc("/health", healthChecker.Handler())
 	http.HandleFunc("/status", statusPage.Handler())
 
-	// Start the server
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 

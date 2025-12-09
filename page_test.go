@@ -39,7 +39,7 @@ func TestPage_Handler(t *testing.T) {
 			page: NewPage(
 				WithTitle("Test Status"),
 				WithHealthChecker(NewHealthChecker().
-					WithTarget("Database", TargetImportanceHigh, check.CheckFunc(func(ctx context.Context) error {
+					WithTarget("Database", check.CheckFunc(func(ctx context.Context) error {
 						return nil
 					}))),
 			),
@@ -55,7 +55,7 @@ func TestPage_Handler(t *testing.T) {
 			page: NewPage(
 				WithTitle("Test Status"),
 				WithHealthChecker(NewHealthChecker().
-					WithTarget("Database", TargetImportanceHigh, check.CheckFunc(func(ctx context.Context) error {
+					WithTarget("Database", check.CheckFunc(func(ctx context.Context) error {
 						return errors.New("connection refused")
 					}))),
 			),
@@ -72,9 +72,9 @@ func TestPage_Handler(t *testing.T) {
 			page: NewPage(
 				WithTitle("Test Status"),
 				WithHealthChecker(NewHealthChecker().
-					WithTarget("Cache", TargetImportanceLow, check.CheckFunc(func(ctx context.Context) error {
+					WithTarget("Cache", check.CheckFunc(func(ctx context.Context) error {
 						return errors.New("cache miss")
-					}))),
+					}), WithImportance(TargetImportanceLow))),
 			),
 			expectedStatus: http.StatusOK,
 			expectedBody: []string{
@@ -89,12 +89,12 @@ func TestPage_Handler(t *testing.T) {
 			page: NewPage(
 				WithTitle("Test Status"),
 				WithHealthChecker(NewHealthChecker().
-					WithTarget("Database", TargetImportanceHigh, check.CheckFunc(func(ctx context.Context) error {
+					WithTarget("Database", check.CheckFunc(func(ctx context.Context) error {
 						return nil
 					})).
-					WithTarget("Cache", TargetImportanceLow, check.CheckFunc(func(ctx context.Context) error {
+					WithTarget("Cache", check.CheckFunc(func(ctx context.Context) error {
 						return errors.New("cache miss")
-					}))),
+					}), WithImportance(TargetImportanceLow))),
 			),
 			expectedStatus: http.StatusOK,
 			expectedBody: []string{

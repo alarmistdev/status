@@ -16,10 +16,11 @@ import (
 )
 
 // HealthTarget represents a single health check target with its name,
-// importance level, and check function.
+// importance level, icon, and check function.
 type HealthTarget struct {
 	Name       string           `json:"name"`
 	Importance TargetImportance `json:"importance"`
+	Icon       string           `json:"icon,omitempty"`
 	check      check.Check
 }
 
@@ -44,13 +45,36 @@ func NewHealthChecker() *HealthChecker {
 	return &HealthChecker{}
 }
 
+// TargetOption is a function that configures a HealthTarget.
+type TargetOption func(*HealthTarget)
+
+// WithImportance sets the importance level of a health check target.
+func WithImportance(importance TargetImportance) TargetOption {
+	return func(t *HealthTarget) {
+		t.Importance = importance
+	}
+}
+
+// WithIcon sets the icon CSS class name for a health check target.
+func WithIcon(icon string) TargetOption {
+	return func(t *HealthTarget) {
+		t.Icon = icon
+	}
+}
+
 // WithTarget adds a new health check target to the checker.
-func (c *HealthChecker) WithTarget(name string, importance TargetImportance, check check.Check) *HealthChecker {
-	c.targets = append(c.targets, HealthTarget{
+func (c *HealthChecker) WithTarget(name string, check check.Check, opts ...TargetOption) *HealthChecker {
+	target := HealthTarget{
 		Name:       name,
-		Importance: importance,
+		Importance: TargetImportanceHigh,
 		check:      check,
-	})
+	}
+
+	for _, opt := range opts {
+		opt(&target)
+	}
+
+	c.targets = append(c.targets, target)
 
 	return c
 }

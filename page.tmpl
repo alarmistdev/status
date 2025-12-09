@@ -171,8 +171,9 @@
             <div class="status-grid">
                 {{range .HealthResults}}
                 <div class="status-item {{if eq .Status "ok"}}ok{{else if eq .Target.Importance "low"}}warning{{else}}fail{{end}}">
-                    <!-- TODO: Add icon for each target -->
-                    <!--<i class="devicon-postgresql-plain icon"></i>-->
+                    {{if .Target.Icon}}
+                    <i class="{{.Target.Icon}} icon"></i>
+                    {{end}}
                     <div class="content">
                         <h3>{{.Target.Name}}</h3>
                         <p>Status: <strong>{{.Status}}</strong></p>
