@@ -30,7 +30,7 @@ func TestPage_Handler(t *testing.T) {
 			expectedStatus: http.StatusOK,
 			expectedBody: []string{
 				"<title>Test Status</title>",
-				"<h1>Test Status</h1>",
+				`<h1>Test Status / <span class="conclusion ok">Good</span></h1>`,
 				`<a href="/">Home</a>`,
 			},
 		},
@@ -45,6 +45,7 @@ func TestPage_Handler(t *testing.T) {
 			),
 			expectedStatus: http.StatusOK,
 			expectedBody: []string{
+				`<h1>Test Status / <span class="conclusion ok">Good</span></h1>`,
 				`<div class="status-item ok">`,
 				"<h3>Database</h3>",
 				"Status: <strong>ok</strong>",
@@ -61,6 +62,7 @@ func TestPage_Handler(t *testing.T) {
 			),
 			expectedStatus: http.StatusOK,
 			expectedBody: []string{
+				`<h1>Test Status / <span class="conclusion fail">Not Good</span></h1>`,
 				`<div class="status-item fail">`,
 				"<h3>Database</h3>",
 				"Status: <strong>fail</strong>",
@@ -78,6 +80,7 @@ func TestPage_Handler(t *testing.T) {
 			),
 			expectedStatus: http.StatusOK,
 			expectedBody: []string{
+				`<h1>Test Status / <span class="conclusion warning">Not Great, Not Terrible</span></h1>`,
 				`<div class="status-item warning">`,
 				"<h3>Cache</h3>",
 				"Status: <strong>fail</strong>",
@@ -99,7 +102,7 @@ func TestPage_Handler(t *testing.T) {
 			expectedStatus: http.StatusOK,
 			expectedBody: []string{
 				"<title>Test Status</title>",
-				"<h1>Test Status</h1>",
+				`<h1>Test Status / <span class="conclusion warning">Not Great, Not Terrible</span></h1>`,
 				`<div class="status-item ok">`,
 				"<h3>Database</h3>",
 				"Status: <strong>ok</strong>",

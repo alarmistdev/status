@@ -162,12 +162,24 @@
             color: #666;
             font-style: italic;
         }
+
+        .conclusion.ok {
+            color: var(--success-color);
+        }
+
+        .conclusion.fail {
+            color: var(--error-color);
+        }
+
+        .conclusion.warning {
+            color: var(--warning-color);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>{{.Title}}</h1>
+            <h1>{{.Title}} / <span class="conclusion {{if eq .Conclusion "Ok"}}ok{{else if eq .Conclusion "Warning"}}warning{{else}}fail{{end}}">{{if eq .Conclusion "Ok"}}Good{{else if eq .Conclusion "Warning"}}Not Great, Not Terrible{{else}}Not Good{{end}}</span></h1>
             {{if .Version}}
             <div class="build-info">
                 [{{.Version}}]

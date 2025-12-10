@@ -95,10 +95,19 @@ type HealthGroup struct {
 type PageData struct {
 	Title         string
 	Version       string
+	Conclusion    Conclusion
 	HealthResults []HealthCheckResult
 	HealthGroups  []HealthGroup
 	Links         []Link
 }
+
+type Conclusion string
+
+const (
+	ConclusionOk      Conclusion = "Ok"
+	ConclusionWarning Conclusion = "Warning"
+	ConclusionFail    Conclusion = "Fail"
+)
 
 // Handler returns an HTTP handler that serves the status page.
 func (p *Page) Handler() http.HandlerFunc {
@@ -116,13 +125,11 @@ func (p *Page) Handler() http.HandlerFunc {
 			}
 		}
 
-		groups := groupHealthResults(healthResults)
-		ungrouped := getUngroupedResults(healthResults)
-
 		data := PageData{
 			Title:         p.title,
-			HealthResults: ungrouped,
-			HealthGroups:  groups,
+			Conclusion:    calculateConclusion(healthResults),
+			HealthResults: getUngroupedResults(healthResults),
+			HealthGroups:  groupHealthResults(healthResults),
 			Links:         p.links,
 		}
 
@@ -187,4 +194,34 @@ func getUngroupedResults(results []HealthCheckResult) []HealthCheckResult {
 	}
 
 	return ungrouped
+}
+
+func calculateConclusion(results []HealthCheckResult) Conclusion {
+	if len(results) == 0 {
+		return ConclusionOk
+	}
+
+	hasFail := false
+	hasWarning := false
+
+	for _, result := range results {
+		if result.Status != HealthTargetStatusOk {
+			switch result.Target.Importance {
+			case TargetImportanceHigh:
+				hasFail = true
+			case TargetImportanceLow:
+				hasWarning = true
+			}
+		}
+	}
+
+	if hasFail {
+		return ConclusionFail
+	}
+
+	if hasWarning {
+		return ConclusionWarning
+	}
+
+	return ConclusionOk
 }
