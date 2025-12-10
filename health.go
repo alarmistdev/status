@@ -15,12 +15,12 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// HealthTarget represents a single health check target with its name,
-// importance level, icon, and check function.
+// HealthTarget represents a single health check target.
 type HealthTarget struct {
 	Name       string           `json:"name"`
 	Importance TargetImportance `json:"importance"`
 	Icon       string           `json:"icon,omitempty"`
+	Group      string           `json:"group,omitempty"`
 	check      check.Check
 }
 
@@ -59,6 +59,14 @@ func WithImportance(importance TargetImportance) TargetOption {
 func WithIcon(icon string) TargetOption {
 	return func(t *HealthTarget) {
 		t.Icon = icon
+	}
+}
+
+// WithGroup sets the group name for a health check target.
+// Targets with the same group name will be displayed together.
+func WithGroup(group string) TargetOption {
+	return func(t *HealthTarget) {
+		t.Group = group
 	}
 }
 

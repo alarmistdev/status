@@ -30,11 +30,13 @@ func main() {
 				check.Config{},
 			),
 			status.WithIcon("devicon-google-plain"),
+			status.WithGroup("External Services"),
 		).
 		WithTarget(
 			"Latency AWS",
 			latencycheck.Check("google.com", googleTLSPort, googleLatencyThreshold),
 			status.WithIcon("devicon-amazonwebservices-plain-wordmark"),
+			status.WithGroup("External Services"),
 		).
 		WithTarget(
 			"Database",
@@ -43,6 +45,7 @@ func main() {
 				return generateRandomError()
 			}),
 			status.WithIcon("devicon-postgresql-plain"),
+			status.WithGroup("Infrastructure"),
 		).
 		WithTarget(
 			"Network",

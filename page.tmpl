@@ -82,6 +82,23 @@
             border: none;
         }
 
+        .group-section {
+            margin-bottom: 30px;
+        }
+
+        .ungrouped-section {
+            margin-bottom: 30px;
+        }
+
+        .group-title {
+            color: var(--accent-color);
+            font-size: 1.3em;
+            margin: 0 0 15px 0;
+            padding: 0;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
         .status-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -166,27 +183,58 @@
         </div>
         {{end}}
 
-        {{if .HealthResults}}
+        {{if or .HealthResults .HealthGroups}}
         <div class="status-section">
-            <div class="status-grid">
-                {{range .HealthResults}}
-                <div class="status-item {{if eq .Status "ok"}}ok{{else if eq .Target.Importance "low"}}warning{{else}}fail{{end}}">
-                    {{if .Target.Icon}}
-                    <i class="{{.Target.Icon}} icon"></i>
-                    {{end}}
-                    <div class="content">
-                        <h3>{{.Target.Name}}</h3>
-                        <p>Status: <strong>{{.Status}}</strong></p>
-                        {{if .ErrorMessage}}
-                        <p class="error">{{if eq .Target.Importance "low"}}Warning: {{else}}Error: {{end}}{{.ErrorMessage}}</p>
+            {{if .HealthResults}}
+            <div class="ungrouped-section">
+                <div class="status-grid">
+                    {{range .HealthResults}}
+                    <div class="status-item {{if eq .Status "ok"}}ok{{else if eq .Target.Importance "low"}}warning{{else}}fail{{end}}">
+                        {{if .Target.Icon}}
+                        <i class="{{.Target.Icon}} icon"></i>
                         {{end}}
-                        {{if .Duration}}
-                        <p class="duration">Response time: {{.Duration}}</p>
-                        {{end}}
+                        <div class="content">
+                            <h3>{{.Target.Name}}</h3>
+                            <p>Status: <strong>{{.Status}}</strong></p>
+                            {{if .ErrorMessage}}
+                            <p class="error">{{if eq .Target.Importance "low"}}Warning: {{else}}Error: {{end}}{{.ErrorMessage}}</p>
+                            {{end}}
+                            {{if .Duration}}
+                            <p class="duration">Response time: {{.Duration}}</p>
+                            {{end}}
+                        </div>
                     </div>
+                    {{end}}
                 </div>
-                {{end}}
             </div>
+            {{end}}
+
+            {{if .HealthGroups}}
+            {{range .HealthGroups}}
+            <div class="group-section">
+                <h2 class="group-title">{{.Name}}</h2>
+                <div class="status-grid">
+                    {{range .Results}}
+                    <div class="status-item {{if eq .Status "ok"}}ok{{else if eq .Target.Importance "low"}}warning{{else}}fail{{end}}">
+                        {{if .Target.Icon}}
+                        <i class="{{.Target.Icon}} icon"></i>
+                        {{end}}
+                        <div class="content">
+                            <h3>{{.Target.Name}}</h3>
+                            <p>Status: <strong>{{.Status}}</strong></p>
+                            {{if .ErrorMessage}}
+                            <p class="error">{{if eq .Target.Importance "low"}}Warning: {{else}}Error: {{end}}{{.ErrorMessage}}</p>
+                            {{end}}
+                            {{if .Duration}}
+                            <p class="duration">Response time: {{.Duration}}</p>
+                            {{end}}
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+            {{end}}
         </div>
         {{end}}
     </div>

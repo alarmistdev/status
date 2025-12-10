@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 	"runtime/debug"
+	"sort"
 )
 
 var (
@@ -84,11 +85,18 @@ type Link struct {
 	URL  string
 }
 
+// HealthGroup represents a group of health check results.
+type HealthGroup struct {
+	Name    string
+	Results []HealthCheckResult
+}
+
 // PageData contains the data that will be rendered in the status page template.
 type PageData struct {
 	Title         string
 	Version       string
 	HealthResults []HealthCheckResult
+	HealthGroups  []HealthGroup
 	Links         []Link
 }
 
@@ -108,9 +116,13 @@ func (p *Page) Handler() http.HandlerFunc {
 			}
 		}
 
+		groups := groupHealthResults(healthResults)
+		ungrouped := getUngroupedResults(healthResults)
+
 		data := PageData{
 			Title:         p.title,
-			HealthResults: healthResults,
+			HealthResults: ungrouped,
+			HealthGroups:  groups,
 			Links:         p.links,
 		}
 
@@ -138,4 +150,41 @@ func retrieveVersion() string {
 
 func parseDefaultTemplate() *template.Template {
 	return template.Must(template.New("page").Parse(defaultTemplateContent))
+}
+
+// groupHealthResults groups health check results by their Group field.
+func groupHealthResults(results []HealthCheckResult) []HealthGroup {
+	groupMap := make(map[string][]HealthCheckResult)
+
+	for _, result := range results {
+		if result.Target.Group != "" {
+			groupMap[result.Target.Group] = append(groupMap[result.Target.Group], result)
+		}
+	}
+
+	groups := make([]HealthGroup, 0, len(groupMap))
+	for name, results := range groupMap {
+		groups = append(groups, HealthGroup{
+			Name:    name,
+			Results: results,
+		})
+	}
+
+	sort.Slice(groups, func(i, j int) bool {
+		return groups[i].Name < groups[j].Name
+	})
+
+	return groups
+}
+
+// getUngroupedResults returns health check results that don't have a group assigned.
+func getUngroupedResults(results []HealthCheckResult) []HealthCheckResult {
+	ungrouped := make([]HealthCheckResult, 0)
+	for _, result := range results {
+		if result.Target.Group == "" {
+			ungrouped = append(ungrouped, result)
+		}
+	}
+
+	return ungrouped
 }
