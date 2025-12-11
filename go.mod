@@ -10,7 +10,7 @@ require (
 	github.com/nats-io/nats.go v1.42.0
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/v9 v9.9.0
-	golang.org/x/sync v0.11.0
+	golang.org/x/sync v0.19.0
 )
 
 require (
