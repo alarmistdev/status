@@ -8,4 +8,26 @@ A Go package for health checking and status page generation. It provides a simpl
 
 ## Usage
 
+```go
+import (
+    "time"
+
+    "github.com/alarmistdev/status/check"
+    dockercheck "github.com/alarmistdev/status/check/system/docker"
+)
+
+dockerCheck, err := dockercheck.Check(
+    map[string]string{"app": "status", "env": "prod"},
+    30*time.Second,           // background refresh interval
+    check.Config{Timeout: 5 * time.Second},
+)
+if err != nil {
+    log.Fatalf("docker check init failed: %v", err)
+}
+defer dockerCheck.Close()
+
+healthChecker.WithTarget("Status containers", dockerCheck)
+```
+
 See [example/main.go](example/main.go).
+
