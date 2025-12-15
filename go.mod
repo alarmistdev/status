@@ -7,7 +7,7 @@ require (
 	github.com/docker/docker v27.3.1+incompatible
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/lib/pq v1.10.9
-	github.com/nats-io/nats.go v1.42.0
+	github.com/nats-io/nats.go v1.47.0
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/v9 v9.9.0
 	golang.org/x/sync v0.11.0
